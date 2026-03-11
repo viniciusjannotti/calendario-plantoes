@@ -1,0 +1,90 @@
+"use client";
+
+import { useState, useEffect, useCallback } from "react";
+import {
+  collection,
+  onSnapshot,
+  doc,
+  setDoc,
+  deleteDoc,
+  writeBatch,
+  serverTimestamp,
+} from "firebase/firestore";
+import { db } from "@/lib/firebase";
+import type { ResidentName, ShiftType } from "@/lib/constants";
+import type { ShiftEntry } from "@/lib/scheduleGenerator";
+
+export interface Shift extends ShiftEntry {
+  id: string;
+}
+
+export function useSchedule(cycleYear: number) {
+  const [shifts, setShifts] = useState<Record<string, Shift>>({});
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    setLoading(true);
+    const colRef = collection(db, `shifts_${cycleYear}`);
+    const unsub = onSnapshot(
+      colRef,
+      (snapshot) => {
+        const data: Record<string, Shift> = {};
+        snapshot.forEach((docSnap) => {
+          data[docSnap.id] = { id: docSnap.id, ...docSnap.data() } as Shift;
+        });
+        setShifts(data);
+        setLoading(false);
+      },
+      (err) => {
+        console.error("Firestore error:", err);
+        setError(err.message);
+        setLoading(false);
+      }
+    );
+    return () => unsub();
+  }, [cycleYear]);
+
+  const assignShift = useCallback(
+    async (date: string, resident: ResidentName, shiftType: ShiftType, blockId?: string) => {
+      const docRef = doc(db, `shifts_${cycleYear}`, date);
+      await setDoc(docRef, {
+        date,
+        resident,
+        shiftType,
+        blockId: blockId ?? null,
+        updatedAt: serverTimestamp(),
+      });
+    },
+    [cycleYear]
+  );
+
+  const removeShift = useCallback(
+    async (date: string) => {
+      const docRef = doc(db, `shifts_${cycleYear}`, date);
+      await deleteDoc(docRef);
+    },
+    [cycleYear]
+  );
+
+  const bulkSetShifts = useCallback(
+    async (entries: ShiftEntry[]) => {
+      const BATCH_SIZE = 400;
+      for (let i = 0; i < entries.length; i += BATCH_SIZE) {
+        const batch = writeBatch(db);
+        const chunk = entries.slice(i, i + BATCH_SIZE);
+        for (const entry of chunk) {
+          const docRef = doc(db, `shifts_${cycleYear}`, entry.date);
+          batch.set(docRef, {
+            ...entry,
+            updatedAt: serverTimestamp(),
+          });
+        }
+        await batch.commit();
+      }
+    },
+    [cycleYear]
+  );
+
+  return { shifts, loading, error, assignShift, removeShift, bulkSetShifts };
+}
