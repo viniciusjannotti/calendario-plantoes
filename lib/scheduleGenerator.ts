@@ -1,5 +1,5 @@
 import type { ResidentName, ShiftType } from "./constants";
-import { getHolidayBlocksForCycle, getHolidaysForCycle, isWeekend } from "./holidayUtils";
+import { getHolidayBlocksForCycle, getHolidayMapForCycle, isWeekend } from "./holidayUtils";
 
 export interface ShiftEntry {
   date: string;
@@ -16,9 +16,12 @@ function fmt(d: Date): string {
 }
 
 // Returns all weekend dates (Sat & Sun) in a cycle (Mar to Feb) grouped by weekend number per month
-function getWeekendsInCycle(cycleYear: number): { year: number; month: number; week: number; dates: string[] }[] {
+function getWeekendsInCycle(
+  cycleYear: number, 
+  overrides?: Record<string, "normal" | "weekend" | "holiday">
+): { year: number; month: number; week: number; dates: string[] }[] {
   const weekends: { year: number; month: number; week: number; dates: string[] }[] = [];
-  const holidaySet = new Set(getHolidaysForCycle(cycleYear).map((h) => h.date));
+  const holidayMap = getHolidayMapForCycle(cycleYear, overrides);
 
   const cycleMonths = [
     { y: cycleYear, m: 2 }, { y: cycleYear, m: 3 }, { y: cycleYear, m: 4 }, // Mar, Apr, May (m is 0-indexed)
@@ -41,12 +44,12 @@ function getWeekendsInCycle(cycleYear: number): { year: number; month: number; w
       if (dow === 6) {
         // Saturday starts a new weekend
         currentWeekDates = [];
-        if (!holidaySet.has(dateStr)) {
+        if (!holidayMap.has(dateStr) && isWeekend(dateStr, overrides)) {
           currentWeekDates.push(dateStr);
         }
       } else if (dow === 0) {
         // Sunday ends the weekend
-        if (!holidaySet.has(dateStr)) {
+        if (!holidayMap.has(dateStr) && isWeekend(dateStr, overrides)) {
           currentWeekDates.push(dateStr);
         }
         if (currentWeekDates.length > 0 && lastSundayMonth !== m) {
@@ -73,13 +76,19 @@ function shuffle<T>(arr: T[]): T[] {
 
 export function generateSchedule(
   cycleYear: number,
-  existingShifts: Record<string, ShiftEntry> = {}
+  existingShifts: Record<string, ShiftEntry> = {},
+  dayOverrides: Record<string, "normal" | "weekend" | "holiday"> = {}
 ): ShiftEntry[] {
   const results: ShiftEntry[] = [];
   const assigned = new Set<string>(Object.keys(existingShifts));
 
   // ─── 1. HOLIDAYS ───────────────────────────────────────────────────────────
+  // NOTE: This part might need further adjustment if we want bridged holidays 
+  // to be automatically recalculated based on manual holiday overrides.
+  // For now, we'll just respect the primary holidays and manual ones.
   const blocks = getHolidayBlocksForCycle(cycleYear);
+  // Add manual holidays as blocks if they aren't already included
+  const holidayMap = getHolidayMapForCycle(cycleYear, dayOverrides);
   // Alternate blocks between Luís Gustavo and Ana Carolina
   const shuffledBlocks = shuffle(blocks);
   for (let i = 0; i < shuffledBlocks.length; i++) {
@@ -100,7 +109,7 @@ export function generateSchedule(
   }
 
   // ─── 2. WEEKENDS ───────────────────────────────────────────────────────────
-  const weekends = getWeekendsInCycle(cycleYear);
+  const weekends = getWeekendsInCycle(cycleYear, dayOverrides);
 
   const remainingWeekendDates: string[] = [];
   

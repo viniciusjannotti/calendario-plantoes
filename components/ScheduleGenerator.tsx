@@ -8,9 +8,10 @@ interface ScheduleGeneratorProps {
   cycleYear: number;
   shifts: Record<string, Shift>;
   onGenerate: (entries: ShiftEntry[]) => Promise<void>;
+  dayOverrides: Record<string, "normal" | "weekend" | "holiday">;
 }
 
-export default function ScheduleGenerator({ cycleYear, shifts, onGenerate }: ScheduleGeneratorProps) {
+export default function ScheduleGenerator({ cycleYear, shifts, dayOverrides, onGenerate }: ScheduleGeneratorProps) {
   const [loading, setLoading] = useState(false);
   const [done, setDone] = useState(false);
 
@@ -20,7 +21,7 @@ export default function ScheduleGenerator({ cycleYear, shifts, onGenerate }: Sch
     try {
       // Dynamic import to avoid SSR issues
       const { generateSchedule } = await import("@/lib/scheduleGenerator");
-      const entries = generateSchedule(cycleYear, shifts);
+      const entries = generateSchedule(cycleYear, shifts, dayOverrides);
       await onGenerate(entries);
       setDone(true);
       setTimeout(() => setDone(false), 3000);

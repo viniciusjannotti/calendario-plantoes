@@ -151,25 +151,59 @@ export function getHolidayBlocksForCycle(cycleYear: number): HolidayBlock[] {
   return blocks;
 }
 
-export function getHolidayMapForCycle(cycleYear: number): Map<string, string> {
+export function getHolidayMapForCycle(
+  cycleYear: number, 
+  overrides?: Record<string, "normal" | "weekend" | "holiday">
+): Map<string, string> {
   const holidays = getHolidaysForCycle(cycleYear);
   const map = new Map<string, string>();
   for (const h of holidays) {
+    if (overrides && overrides[h.date] === "normal") continue;
     map.set(h.date, h.name);
   }
+  
+  if (overrides) {
+    for (const [date, type] of Object.entries(overrides)) {
+      if (type === "holiday" && !map.has(date)) {
+        map.set(date, "Feriado (Manual)");
+      }
+    }
+  }
+  
   return map;
 }
 
-export function getHolidayMap(year: number): Map<string, string> {
+export function getHolidayMap(
+  year: number,
+  overrides?: Record<string, "normal" | "weekend" | "holiday">
+): Map<string, string> {
   const holidays = getHolidaysForYear(year);
   const map = new Map<string, string>();
   for (const h of holidays) {
+    if (overrides && overrides[h.date] === "normal") continue;
     map.set(h.date, h.name);
   }
+
+  if (overrides) {
+    for (const [date, type] of Object.entries(overrides)) {
+      const d = new Date(date + "T00:00:00");
+      if (type === "holiday" && d.getFullYear() === year && !map.has(date)) {
+        map.set(date, "Feriado (Manual)");
+      }
+    }
+  }
+
   return map;
 }
 
-export function isWeekend(dateStr: string): boolean {
+export function isWeekend(
+  dateStr: string,
+  overrides?: Record<string, "normal" | "weekend" | "holiday">
+): boolean {
+  if (overrides && overrides[dateStr]) {
+    if (overrides[dateStr] === "weekend") return true;
+    if (overrides[dateStr] === "normal" || overrides[dateStr] === "holiday") return false;
+  }
   const d = new Date(dateStr + "T00:00:00");
   const dow = d.getDay();
   return dow === 0 || dow === 6;

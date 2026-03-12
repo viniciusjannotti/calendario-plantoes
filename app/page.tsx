@@ -24,8 +24,16 @@ export default function HomePage() {
   const [view, setView] = useState<ViewType>("month");
   const [selectedResident, setSelectedResident] = useState<ResidentName | null>(null);
 
-  const { shifts, loading, error, assignShift, removeShift, bulkSetShifts } =
-    useSchedule(cycleYear);
+  const { 
+    shifts, 
+    dayOverrides,
+    loading, 
+    error, 
+    assignShift, 
+    removeShift, 
+    bulkSetShifts,
+    setDayOverride
+  } = useSchedule(cycleYear);
 
   function handlePrevMonth() {
     if (month === 3) {
@@ -85,6 +93,7 @@ export default function HomePage() {
       <ScheduleGenerator
         cycleYear={cycleYear}
         shifts={shifts}
+        dayOverrides={dayOverrides}
         onGenerate={handleGenerate}
       />
 
@@ -125,6 +134,8 @@ export default function HomePage() {
                 selectedResident={selectedResident}
                 onAssign={assignShift}
                 onRemove={removeShift}
+                dayOverrides={dayOverrides}
+                onSetOverride={setDayOverride}
               />
             )}
             {view === "year" && (

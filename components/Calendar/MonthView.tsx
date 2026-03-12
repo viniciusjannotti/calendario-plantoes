@@ -18,6 +18,8 @@ interface MonthViewProps {
   selectedResident: ResidentName | null;
   onAssign: (date: string, resident: ResidentName, shiftType: ShiftType, blockId?: string) => Promise<void>;
   onRemove: (date: string) => Promise<void>;
+  dayOverrides: Record<string, "normal" | "weekend" | "holiday">;
+  onSetOverride: (date: string, type: "normal" | "weekend" | "holiday") => Promise<void>;
 }
 
 export default function MonthView({
@@ -27,9 +29,12 @@ export default function MonthView({
   selectedResident,
   onAssign,
   onRemove,
+  dayOverrides,
+  onSetOverride,
 }: MonthViewProps) {
   const [modalDate, setModalDate] = useState<string | null>(null);
-  const holidayMap = getHolidayMap(year);
+  const [contextMenu, setContextMenu] = useState<{ x: number, y: number, date: string } | null>(null);
+  const holidayMap = getHolidayMap(year, dayOverrides);
 
   const firstDay = new Date(year, month - 1, 1).getDay();
   const daysInMonth = new Date(year, month, 0).getDate();
@@ -45,7 +50,7 @@ export default function MonthView({
   const modalShiftType = modalDateStr
     ? holidayMap.has(modalDateStr)
       ? "holiday"
-      : isWeekend(modalDateStr)
+      : isWeekend(modalDateStr, dayOverrides)
       ? "weekend"
       : "normal"
     : "normal";
@@ -75,7 +80,7 @@ export default function MonthView({
             const dateStr = fmt(year, month, day);
             const shift = shifts[dateStr];
             const isHoliday = holidayMap.has(dateStr);
-            const isWknd = isWeekend(dateStr);
+            const isWknd = isWeekend(dateStr, dayOverrides);
             const holidayName = holidayMap.get(dateStr);
 
             const isBlock = !!shift?.blockId;
@@ -97,6 +102,10 @@ export default function MonthView({
                 )}
                 <button
                   onClick={() => setModalDate(dateStr)}
+                  onContextMenu={(e) => {
+                    e.preventDefault();
+                    setContextMenu({ x: e.clientX, y: e.clientY, date: dateStr });
+                  }}
                   className={`cal-cell w-full aspect-square rounded-xl flex flex-col items-center justify-center text-sm font-semibold transition-all duration-200 border z-10 relative ${
                     isDimmed ? "opacity-25" : ""
                   } ${
@@ -169,6 +178,53 @@ export default function MonthView({
           onRemove={() => onRemove(modalDate)}
           onClose={() => setModalDate(null)}
         />
+      )}
+
+      {contextMenu && (
+        <>
+          <div 
+            className="fixed inset-0 z-[100]" 
+            onClick={() => setContextMenu(null)}
+          />
+          <div 
+            className="fixed z-[101] glass-card shadow-2xl border border-slate-700/50 py-1 min-w-[140px] animate-scale-in"
+            style={{ top: contextMenu.y, left: contextMenu.x }}
+          >
+            <p className="px-3 py-1.5 text-[10px] uppercase font-bold text-slate-500 tracking-wider border-b border-slate-700/30 mb-1">
+              Tipo do Dia
+            </p>
+            <button
+              onClick={() => {
+                onSetOverride(contextMenu.date, "normal");
+                setContextMenu(null);
+              }}
+              className="w-full text-left px-3 py-2 text-xs text-slate-300 hover:bg-slate-700/50 transition-colors flex items-center gap-2"
+            >
+              <div className="w-2 h-2 rounded-full bg-slate-700 border border-slate-600" />
+              Dia Normal
+            </button>
+            <button
+              onClick={() => {
+                onSetOverride(contextMenu.date, "weekend");
+                setContextMenu(null);
+              }}
+              className="w-full text-left px-3 py-2 text-xs text-slate-300 hover:bg-slate-700/50 transition-colors flex items-center gap-2"
+            >
+              <div className="w-2 h-2 rounded-full bg-slate-600" />
+              Fim de Semana
+            </button>
+            <button
+              onClick={() => {
+                onSetOverride(contextMenu.date, "holiday");
+                setContextMenu(null);
+              }}
+              className="w-full text-left px-3 py-2 text-xs text-slate-300 hover:bg-slate-700/50 transition-colors flex items-center gap-2"
+            >
+              <div className="w-2 h-2 rounded-full bg-yellow-500" />
+              Feriado
+            </button>
+          </div>
+        </>
       )}
     </>
   );

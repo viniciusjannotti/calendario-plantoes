@@ -20,6 +20,7 @@ export interface Shift extends ShiftEntry {
 
 export function useSchedule(cycleYear: number) {
   const [shifts, setShifts] = useState<Record<string, Shift>>({});
+  const [dayOverrides, setDayOverrides] = useState<Record<string, "normal" | "weekend" | "holiday">>({});
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -40,6 +41,24 @@ export function useSchedule(cycleYear: number) {
         console.error("Firestore error:", err);
         setError(err.message);
         setLoading(false);
+      }
+    );
+    return () => unsub();
+  }, [cycleYear]);
+
+  useEffect(() => {
+    const colRef = collection(db, `day_overrides_${cycleYear}`);
+    const unsub = onSnapshot(
+      colRef,
+      (snapshot) => {
+        const data: Record<string, "normal" | "weekend" | "holiday"> = {};
+        snapshot.forEach((docSnap) => {
+          data[docSnap.id] = docSnap.data().type;
+        });
+        setDayOverrides(data);
+      },
+      (err) => {
+        console.error("Firestore overrides error:", err);
       }
     );
     return () => unsub();
@@ -86,5 +105,31 @@ export function useSchedule(cycleYear: number) {
     [cycleYear]
   );
 
-  return { shifts, loading, error, assignShift, removeShift, bulkSetShifts };
+  const setDayOverride = useCallback(
+    async (date: string, type: "normal" | "weekend" | "holiday") => {
+      const docRef = doc(db, `day_overrides_${cycleYear}`, date);
+      await setDoc(docRef, { type, updatedAt: serverTimestamp() });
+    },
+    [cycleYear]
+  );
+
+  const removeDayOverride = useCallback(
+    async (date: string) => {
+      const docRef = doc(db, `day_overrides_${cycleYear}`, date);
+      await deleteDoc(docRef);
+    },
+    [cycleYear]
+  );
+
+  return { 
+    shifts, 
+    dayOverrides,
+    loading, 
+    error, 
+    assignShift, 
+    removeShift, 
+    bulkSetShifts,
+    setDayOverride,
+    removeDayOverride
+  };
 }
