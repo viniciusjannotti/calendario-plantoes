@@ -183,46 +183,60 @@ export default function MonthView({
       {contextMenu && (
         <>
           <div 
-            className="fixed inset-0 z-[100]" 
+            className="fixed inset-0 z-[100] bg-slate-950/40 backdrop-blur-sm animate-fade-in" 
             onClick={() => setContextMenu(null)}
           />
           <div 
-            className="fixed z-[101] glass-card shadow-2xl border border-slate-700/50 py-1 min-w-[140px] animate-scale-in"
-            style={{ top: contextMenu.y, left: contextMenu.x }}
+            className="fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 z-[101] glass-card shadow-2xl border border-slate-700/50 py-1 min-w-[200px] animate-scale-in"
           >
-            <p className="px-3 py-1.5 text-[10px] uppercase font-bold text-slate-500 tracking-wider border-b border-slate-700/30 mb-1">
-              Tipo do Dia
-            </p>
-            <button
-              onClick={() => {
-                onSetOverride(contextMenu.date, "normal");
-                setContextMenu(null);
-              }}
-              className="w-full text-left px-3 py-2 text-xs text-slate-300 hover:bg-slate-700/50 transition-colors flex items-center gap-2"
-            >
-              <div className="w-2 h-2 rounded-full bg-slate-700 border border-slate-600" />
-              Dia Normal
-            </button>
-            <button
-              onClick={() => {
-                onSetOverride(contextMenu.date, "weekend");
-                setContextMenu(null);
-              }}
-              className="w-full text-left px-3 py-2 text-xs text-slate-300 hover:bg-slate-700/50 transition-colors flex items-center gap-2"
-            >
-              <div className="w-2 h-2 rounded-full bg-slate-600" />
-              Fim de Semana
-            </button>
-            <button
-              onClick={() => {
-                onSetOverride(contextMenu.date, "holiday");
-                setContextMenu(null);
-              }}
-              className="w-full text-left px-3 py-2 text-xs text-slate-300 hover:bg-slate-700/50 transition-colors flex items-center gap-2"
-            >
-              <div className="w-2 h-2 rounded-full bg-yellow-500" />
-              Feriado
-            </button>
+            <div className="px-4 py-2 border-b border-white/5 mb-2">
+              <p className="text-[10px] uppercase font-bold text-slate-500 tracking-widest">
+                Alterar Tipo do Dia
+              </p>
+              <p className="text-xs font-semibold text-white mt-0.5">
+                {contextMenu.date}
+              </p>
+            </div>
+            <div className="px-1">
+              <button
+                onClick={() => {
+                  onSetOverride(contextMenu.date, "normal");
+                  setContextMenu(null);
+                }}
+                className="w-full text-left px-3 py-2.5 text-xs text-slate-300 hover:bg-white/5 rounded-lg transition-colors flex items-center gap-3"
+              >
+                <div className="w-2.5 h-2.5 rounded-full bg-slate-700 border border-slate-600" />
+                <span>Dia Normal <span className="text-[10px] opacity-40 ml-1">(Padrão)</span></span>
+              </button>
+              <button
+                onClick={() => {
+                  onSetOverride(contextMenu.date, "weekend");
+                  setContextMenu(null);
+                }}
+                className="w-full text-left px-3 py-2.5 text-xs text-slate-300 hover:bg-white/5 rounded-lg transition-colors flex items-center gap-3"
+              >
+                <div className="w-2.5 h-2.5 rounded-full bg-slate-600 shadow-[0_0_8px_rgba(71,85,105,0.5)]" />
+                <span>Fim de Semana</span>
+              </button>
+              <button
+                onClick={() => {
+                  onSetOverride(contextMenu.date, "holiday");
+                  setContextMenu(null);
+                }}
+                className="w-full text-left px-3 py-2.5 text-xs text-slate-300 hover:bg-white/5 rounded-lg transition-colors flex items-center gap-3"
+              >
+                <div className="w-2.5 h-2.5 rounded-full bg-yellow-500 shadow-[0_0_8px_rgba(234,179,8,0.5)]" />
+                <span>Feriado</span>
+              </button>
+            </div>
+            <div className="mt-2 p-1 pt-0">
+              <button
+                onClick={() => setContextMenu(null)}
+                className="w-full px-3 py-2 text-[10px] uppercase font-bold text-slate-500 hover:text-slate-300 transition-colors"
+              >
+                Cancelar
+              </button>
+            </div>
           </div>
         </>
       )}
