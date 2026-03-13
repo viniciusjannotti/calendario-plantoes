@@ -13,6 +13,7 @@ interface YearViewProps {
   shifts: Record<string, Shift>;
   onMonthClick: (month: number) => void;
   selectedResident: ResidentName | null;
+  dayOverrides: Record<string, "normal" | "weekend" | "holiday">;
 }
 
 function MiniMonth({
@@ -20,6 +21,7 @@ function MiniMonth({
   year,
   shifts,
   holidayMap,
+  dayOverrides,
   selectedResident,
   onClick,
 }: {
@@ -27,6 +29,7 @@ function MiniMonth({
   year: number;
   shifts: Record<string, Shift>;
   holidayMap: Map<string, string>;
+  dayOverrides: Record<string, "normal" | "weekend" | "holiday">;
   selectedResident: ResidentName | null;
   onClick: () => void;
 }) {
@@ -57,7 +60,7 @@ function MiniMonth({
           const dateStr = fmt(year, month, day);
           const shift = shifts[dateStr];
           const isHoliday = holidayMap.has(dateStr);
-          const isWknd = isWeekend(dateStr);
+          const isWknd = isWeekend(dateStr, dayOverrides);
           const dimmed = selectedResident && shift && shift.resident !== selectedResident;
 
           const color = shift
@@ -86,8 +89,9 @@ export default function YearView({
   shifts,
   onMonthClick,
   selectedResident,
+  dayOverrides,
 }: YearViewProps) {
-  const mergedHolidayMap = getHolidayMapForCycle(cycleYear);
+  const mergedHolidayMap = getHolidayMapForCycle(cycleYear, dayOverrides);
 
   // March to Feb
   const monthsInCycle = [3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 1, 2];
@@ -103,6 +107,7 @@ export default function YearView({
             year={calendarYear}
             shifts={shifts}
             holidayMap={mergedHolidayMap}
+            dayOverrides={dayOverrides}
             selectedResident={selectedResident}
             onClick={() => onMonthClick(month)}
           />

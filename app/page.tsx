@@ -144,14 +144,16 @@ export default function HomePage() {
                 shifts={shifts}
                 selectedResident={selectedResident}
                 onMonthClick={handleMonthClick}
+                dayOverrides={dayOverrides}
               />
             )}
             {view === "resident" && (
-              <ResidentView
+               <ResidentView
                 cycleYear={cycleYear}
                 shifts={shifts}
                 selectedResident={selectedResident}
                 onSelectResident={(r) => setSelectedResident(r)}
+                dayOverrides={dayOverrides}
               />
             )}
           </div>

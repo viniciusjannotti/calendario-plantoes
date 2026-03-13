@@ -9,6 +9,7 @@ interface ResidentViewProps {
   shifts: Record<string, Shift>;
   selectedResident: ResidentName | null;
   onSelectResident: (r: ResidentName) => void;
+  dayOverrides: Record<string, "normal" | "weekend" | "holiday">;
 }
 
 export default function ResidentView({
@@ -16,8 +17,9 @@ export default function ResidentView({
   shifts,
   selectedResident,
   onSelectResident,
+  dayOverrides,
 }: ResidentViewProps) {
-  const mergedHolidayMap = getHolidayMapForCycle(cycleYear);
+  const mergedHolidayMap = getHolidayMapForCycle(cycleYear, dayOverrides);
   const allShifts = Object.values(shifts).sort((a, b) => a.date.localeCompare(b.date));
 
   const residents = selectedResident
