@@ -3,14 +3,12 @@
 import { useState } from "react";
 import type { ResidentName, ShiftType } from "@/lib/constants";
 import { useSchedule } from "@/hooks/useSchedule";
-import type { ShiftEntry } from "@/lib/scheduleGenerator";
 
 import TopNav from "@/components/TopNav";
 import Sidebar from "@/components/Sidebar";
 import MonthView from "@/components/Calendar/MonthView";
 import YearView from "@/components/Calendar/YearView";
 import ResidentView from "@/components/Calendar/ResidentView";
-import ScheduleGenerator from "@/components/ScheduleGenerator";
 
 type ViewType = "month" | "year" | "resident";
 
@@ -31,8 +29,6 @@ export default function HomePage() {
     error, 
     assignShift, 
     removeShift, 
-    bulkSetShifts,
-    clearSchedule,
     setDayOverride
   } = useSchedule(cycleYear);
 
@@ -74,10 +70,6 @@ export default function HomePage() {
     if (r) setView("resident");
   }
 
-  async function handleGenerate(entries: ShiftEntry[]) {
-    await bulkSetShifts(entries);
-  }
-
   return (
     <div className="min-h-screen flex flex-col p-3 md:p-4 gap-3 md:gap-4 max-w-[1600px] mx-auto">
       {/* Top Nav */}
@@ -88,15 +80,6 @@ export default function HomePage() {
         onPrevMonth={handlePrevMonth}
         onNextMonth={handleNextMonth}
         onViewChange={handleViewChange}
-      />
-
-      {/* Generator bar */}
-      <ScheduleGenerator
-        cycleYear={cycleYear}
-        shifts={shifts}
-        dayOverrides={dayOverrides}
-        onGenerate={handleGenerate}
-        onClear={clearSchedule}
       />
 
       {/* Main layout */}
