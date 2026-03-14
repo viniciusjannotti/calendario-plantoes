@@ -105,6 +105,26 @@ export function useSchedule(cycleYear: number) {
     [cycleYear]
   );
 
+  const clearSchedule = useCallback(
+    async () => {
+      // Collect all current shift IDs to delete
+      const entries = Object.values(shifts);
+      if (entries.length === 0) return;
+
+      const BATCH_SIZE = 400;
+      for (let i = 0; i < entries.length; i += BATCH_SIZE) {
+        const batch = writeBatch(db);
+        const chunk = entries.slice(i, i + BATCH_SIZE);
+        for (const entry of chunk) {
+          const docRef = doc(db, `shifts_${cycleYear}`, entry.date);
+          batch.delete(docRef);
+        }
+        await batch.commit();
+      }
+    },
+    [cycleYear, shifts]
+  );
+
   const setDayOverride = useCallback(
     async (date: string, type: "normal" | "weekend" | "holiday") => {
       const docRef = doc(db, `day_overrides_${cycleYear}`, date);
@@ -129,6 +149,7 @@ export function useSchedule(cycleYear: number) {
     assignShift, 
     removeShift, 
     bulkSetShifts,
+    clearSchedule,
     setDayOverride,
     removeDayOverride
   };

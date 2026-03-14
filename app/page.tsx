@@ -32,6 +32,7 @@ export default function HomePage() {
     assignShift, 
     removeShift, 
     bulkSetShifts,
+    clearSchedule,
     setDayOverride
   } = useSchedule(cycleYear);
 
@@ -95,6 +96,7 @@ export default function HomePage() {
         shifts={shifts}
         dayOverrides={dayOverrides}
         onGenerate={handleGenerate}
+        onClear={clearSchedule}
       />
 
       {/* Main layout */}
